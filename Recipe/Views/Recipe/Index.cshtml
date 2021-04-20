@@ -1,0 +1,308 @@
+@{
+    ViewData["Title"] = "Recipe";
+}
+<style>
+    .foregroundImg {
+        cursor: pointer;
+        position: relative;
+        z-index: 2;
+        pointer-events: none;
+        filter: brightness(75%);
+        border-radius: 10%;
+    }
+
+    .backgroundImg {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: -1;
+        filter: blur(25px);
+        transform: scale(1.05);
+    }
+
+    .border-radius-2 {
+        border-radius: 2% !important;
+    }
+</style>
+@*Modal for Lesson Start*@
+<div class="modal fade" id="createRecipe">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-muted">Create Recipe</h5>
+                <a href="#" class="close" data-dismiss="modal">&times;</a>
+            </div>
+            <div class="modal-body">
+                @*hidden field for storing current subjectId*@
+                @* <input type="hidden" id="hiddenEvaluationId" /> *@
+                <div class="row">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data" class="w-full">
+                        <div class="col-md-12">
+                            <div class="sm:col-span-3">
+                                <label class="block text-sm font-medium text-gray-700" for="recipeTitle">
+                                    Recipe Name
+                                </label>
+                                <input
+                                    class="w-full bg-grey-lighter text-gray-darker border-2 border-gray-300 rounded py-2 px-2 mt-1 shadow-sm sm:text-sm rounded-md"
+                                    id="title" type="text" placeholder="Enter recipe title" name="recipeTitle" required>
+                                <p class="text-red-500 text-xs italic" id="recipeTitleValidation"></p>
+                            </div>
+                            <div class="mt-2">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    Cover photo
+                                </label>
+                                <div
+                                    class="mt-1 flex justify-center px-6 pt-4 pb-3 border-2 border-gray-300 border-dashed rounded-md">
+                                    <div class="space-y-1 text-center">
+                                        <img src="https://png.pngtree.com/png-vector/20190223/ourmid/pngtree-vector-picture-icon-png-image_695350.jpg"
+                                            alt="" class="mx-auto h-40 w-auto text-gray-400" id="previewImage">
+                                        <div class="flex text-sm text-gray-600 mt-3 justify-center">
+                                            <label for="recipeImage"
+                                                class="relative cursor-pointer bg-white rounded-md font-medium text-red-600 hover:text-red-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-red-500">
+                                                <span>Upload a file</span>
+                                                <input id="recipeImage" name="recipeImage" type="file" class="sr-only"
+                                                    required>
+                                            </label>
+                                        </div>
+                                        <p class="text-xs text-gray-500">
+                                            PNG, JPG, GIF up to 10MB
+                                        </p>
+                                    </div>
+                                </div>
+                                <p class="text-red-500 text-xs italic" id="recipeImageValidation"></p>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <a href="#" class="btn btn-light" data-dismiss="modal">Cancel</a>
+                            <button type="submit" class="btn btn-danger">Create</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@*Modal for Lesson Start*@
+<div class="flex justify-between mt-6">
+    <h1 class="font-bold text-2xl mb-2">Recent Recipes</h1>
+    <button onclick='Recipe()'
+        class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow hover:cursor">Add
+        new recipe <i class="fas fa-plus"></i></button>
+</div>
+
+<div class="row">
+    @foreach (var recipe in ViewBag.RecentRecipes)
+    {
+        string imageBase64Data = Convert.ToBase64String(recipe.Image);
+        string imageSource = string.Format("data:image/jpg;base64,{0}", imageBase64Data);
+        <div class="col-md-4">
+            <div class="bg-gray-100 w-full h-64 mt-5 border-radius-2 relative"
+            style="background-image:url('@imageSource'); background-position: center; background-repeat: no-repeat; background-size: cover; z-index:1">
+                <div class="flex flex-row items-end h-full w-full">
+                    <div
+                    class="flex flex-col w-full pb-3 pt-10 px-3 bg-gradient-to-t from-black text-gray-200 border-radius-2">
+                        <a href="/Details/@recipe.RecipeId" class="text-white">
+                            <h3 class="text-base font-bold leading-5 uppercase">@recipe.Name</h3>
+                        </a>
+                        <div class="inline-flex items-center flex justify-between">
+                            <span class="capitalize font-base text-xs my-1 mr-1">@recipe.CreatedBy</span>
+                            @if (@recipe.IsSaved)
+                            {
+                                <a class="cursor-pointer" onclick="Save(@recipe.RecipeId)"><i class="fas fa-bookmark"
+                                id="saveIcon_@recipe.RecipeId"></i></a>
+                            }
+                            else
+                            {
+                                <a class="cursor-pointer" onclick="Save(@recipe.RecipeId)"><i class="far fa-bookmark"
+                                id="saveIcon_@recipe.RecipeId"></i></a>
+                            }
+                        </div>
+                        <div class="flex flex-row justify-end">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-100 w-full mt-5 h-64 backgroundImg"
+            style="background-image:url('@imageSource'); background-position: center; background-repeat: no-repeat; background-size: cover;">
+            </div>
+        </div>
+    }
+</div>
+<h1 class="font-bold text-2xl mb-2 mt-10">Dashboard</h1>
+<div class="flex flex-col items-center">
+    @foreach (var recipe in ViewBag.DashboardRecipes)
+    {
+        string imageBase64Data = Convert.ToBase64String(recipe.Recipe.Image);
+        string imageSource = string.Format("data:image/jpg;base64,{0}", imageBase64Data);
+        <div class="max-w-xl w-full mt-2">
+            <div
+            class="bg-white max-w-md rounded overflow-hidden shadow mb-10 sm:rounded-lg max-w-2xl border border-gray-300">
+                <header class="flex flex-start">
+                    <div>
+                        <a asp-controller="Recipe" asp-action="Profile" asp-route-userId="@recipe.Recipe.CreatedBy"
+                        class="cursor-pointer m-4 flex items-center text-sm outline-none focus:outline-none focus:border-gray-300 transition duration-150 ease-in-out">
+                            <img src="https://t4.ftcdn.net/jpg/03/46/93/61/360_F_346936114_RaxE6OQogebgAWTalE1myseY1Hbb5qPM.jpg"
+                            class="h-9 w-9 rounded-full object-cover" alt="userProfile" />
+                            <div>
+                                <p class="block ml-2 font-bold">@recipe.CreatedBy</p>
+                            </div>
+                        </a>
+                    </div>
+                </header>
+                <div class="bg-gray-100 w-full h-96 "
+                style="background-image:url('@imageSource'); background-position: center; background-repeat: no-repeat; background-size: cover; z-index:1">
+                </div>
+                <div class="px-6 pt-4">
+                    <div class="mb-2">
+                        <div class="flex justify-between">
+                            <h3 class="text-xl font-bold leading-5 uppercase">@recipe.Recipe.Name</h3>
+                            @if (@recipe.IsSaved)
+                            {
+                                <a class="cursor-pointer text-xl" onclick="SaveFromDashboard(@recipe.Recipe.RecipeId)"><i
+                                class="fas fa-bookmark" id="saveRecipe_@recipe.Recipe.RecipeId"></i></a>
+                            }
+                            else
+                            {
+                                <a class="cursor-pointer text-xl" onclick="SaveFromDashboard(@recipe.Recipe.RecipeId)"><i
+                                class="far fa-bookmark" id="saveRecipe_@recipe.Recipe.RecipeId"></i></a>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 pt-2">
+                    <div class="mb-2">
+                        <div class="flex justify-between">
+                            <div class="font-bold">
+                                <i class="far fa-clock"></i>
+                                <span>@recipe.Recipe.Time min</span>
+                            </div>
+                            <div class="font-bold">
+                                <i class="fas fa-fire"></i>
+                                <span>@recipe.Recipe.Calories kcal</span>
+                            </div>
+                            <div class="font-bold">
+                                <i class="fas fa-concierge-bell"></i>
+                                <span>@recipe.Recipe.Serving people</span>
+                            </div>
+                            <div class="font-bold">
+                                <i class="fas fa-star"></i>
+                                <span>@recipe.Rating</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 pt-3">
+                    <div class="flex justify-between">
+                        <div>
+                            <span>Prepare: </span>
+                            @if (@recipe.Recipe.Prepare == "Easy")
+                            {
+                                <span
+                            class="inline-block rounded-full text-gray-600 bg-green-300 px-2 py-1 text-sm font-bold mr-3">@recipe.Recipe.Prepare</span>
+                            }
+                            @if (@recipe.Recipe.Prepare == "Medium")
+                            {
+                                <span
+                            class="inline-block rounded-full text-gray-600 bg-yellow-300 px-2 py-1 text-sm font-bold mr-3">@recipe.Recipe.Prepare</span>
+                            }
+                            @if (@recipe.Recipe.Prepare == "Hard")
+                            {
+                                <span
+                            class="inline-block rounded-full text-gray-600 bg-red-300 px-2 py-1 text-sm font-bold mr-3">@recipe.Recipe.Prepare</span>
+                            }
+                        </div>
+                        <div>
+                            <span>Ingredients: </span>
+                            <span class="font-bold text-gray-700">@recipe.Recipe.RecipeIngredients.Count</span>
+                        </div>
+                        <div>
+                            <span>Category: </span>
+                            <span class="font-bold text-gray-700">@recipe.Recipe.Category</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 pt-4 pb-3">
+                    <div class="flex justify-end">
+                        <a href="/Details/@recipe.Recipe.RecipeId"
+                        class="text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded hover:bg-gray-900 hover:text-white">Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts{
+<script>
+    var Recipe = function () {
+        $('#createRecipe').modal("show");
+        // $('#className').html(className);
+        // $('#classSubject').html(classSubject);
+        // $('#classId').val(classId);
+    }
+    function readURL(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $('#previewImage').attr('src', e.target.result);
+            }
+            reader.readAsDataURL(input.files[0]); // convert to base64 string
+        }
+    }
+
+    $("#recipeImage").change(function () {
+        readURL(this);
+    });
+
+    var Save = function (recipeId) {
+        if (recipeId != null) {
+            $.ajax({
+                type: "POST",
+                url: "/Recipe/Save",
+                data: { recipeId: recipeId },
+                success: function (result) {
+                    console.log("the recipe saved or unsaved");
+                    var isSavedfas = $('#saveIcon_' + recipeId).hasClass("fas");
+                    if (isSavedfas) {
+                        $('#saveIcon_' + recipeId).removeClass("fas fa-bookmark");
+                        $('#saveIcon_' + recipeId).addClass("far fa-bookmark");
+                    } else {
+                        $('#saveIcon_' + recipeId).removeClass("far fa-bookmark");
+                        $('#saveIcon_' + recipeId).addClass("fas fa-bookmark");
+                    }
+                },
+                error: function (xhr) {
+                    alert('Recipe could not be saved due to an error in server!');
+                    console.log(xhr);
+                }
+            });
+        }
+    };
+
+    var SaveFromDashboard = function (recipeId) {
+        if (recipeId != null) {
+            $.ajax({
+                type: "POST",
+                url: "/Recipe/Save",
+                data: { recipeId: recipeId },
+                success: function (result) {
+                    console.log("the recipe saved or unsaved");
+                    var isSavedfas = $('#saveRecipe_' + recipeId).hasClass("fas");
+                    if (isSavedfas) {
+                        $('#saveRecipe_' + recipeId).removeClass("fas fa-bookmark");
+                        $('#saveRecipe_' + recipeId).addClass("far fa-bookmark");
+                    } else {
+                        $('#saveRecipe_' + recipeId).removeClass("far fa-bookmark");
+                        $('#saveRecipe_' + recipeId).addClass("fas fa-bookmark");
+                    }
+                },
+                error: function (xhr) {
+                    alert('Recipe could not be saved due to an error in server!');
+                    console.log(xhr);
+                }
+            });
+        }
+    };
+</script>
+}

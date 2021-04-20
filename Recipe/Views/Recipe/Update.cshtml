@@ -1,0 +1,283 @@
+@using Recipe.Models;
+@model Recipes;
+@{
+    ViewData["Title"] = "Recipe";
+}
+@{
+    string imageBase64Data = Convert.ToBase64String(Model.Image);
+    string imageSource = string.Format("data:image/jpg;base64,{0}", imageBase64Data);
+}
+
+<div class="row mt-10">
+    <div class="col-md-3">
+        <div class="flex justify-center">
+            <img class="object-fit h-auto w-60 rounded" src="@imageSource" alt="@Model.ImageFileName">
+        </div>
+    </div>
+    <div class="col-md-9">
+        <h1 class="font-bold text-xl mb-4">Ingredients</h1>
+        <form class="w-full">
+            <div class="flex flex-wrap -mx-3">
+                <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
+                    <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                        for="IngredientName">
+                        Ingredient Name
+                    </label>
+                    <input
+                        class="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2.5 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-red-400"
+                        id="IngredientName" type="text" placeholder="Milk">
+                    @* <p class="text-red-500 text-xs italic">Please fill out this field.</p> *@
+                </div>
+                <div class="w-full md:w-1/2 px-3">
+                    <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                        for="IngredientQuantity">
+                        Quantity
+                    </label>
+                    <input
+                        class="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2.5 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-red-400"
+                        id="IngredientQuantity" type="text" placeholder="500 ml">
+                </div>
+            </div>
+            <div class="w-full flex justify-end mt-3">
+                <button
+                    class="shadow bg-gray-500 hover:bg-gray-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded"
+                    type="button" onclick="AddIngredients()">
+                    Add
+                </button>
+            </div>
+        </form>
+        <div class="mt-4">
+            <div class="row">
+                @foreach (var ingredient in Model.RecipeIngredients)
+                {
+                    <div class="col-md-6 mb-4">
+                        <div class="card border-light shadow">
+                            <div class="card-body flex justify-between  align-items-center p-3">
+                                @* <input type="hidden" id="IngredientId" value="@ingredient.RecipeIngredientsId"> *@
+                                <p><a onclick="DeleteIngredient(@ingredient.RecipeIngredientsId)" class="mr-3"><i
+                                        class="fas fa-times text-gray-500 hover:text-red-500 cursor-pointer"></i></a>@ingredient.Name
+                                </p>
+                                <span
+                                class="inline-block rounded-full text-gray-600 bg-gray-100 px-2 py-1 text-sm font-bold mr-3 ml-3">@ingredient.Quantity</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-4 flex justify-end">
+    <div class="col-md-9">
+        <div class="flex flex-wrap -mx-3 mb-2">
+            <input type="hidden" asp-for="RecipeId" id="RecipeId">
+            <input type="hidden" asp-for="CreatedBy" id="RecipeCreatedBy">
+            <div class="w-full md:w-1/3 px-3 mb-6 md:mb-0">
+                <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="RecipeName">
+                    Name
+                </label>
+                <input
+                    class="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-red-400"
+                    id="RecipeName" asp-for="Name" type="text" placeholder="Pizza">
+            </div>
+            <div class="w-full md:w-1/3 px-3 mb-6 md:mb-0">
+                <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="RecipeTime">
+                    Time <span class="italic text-gray-500">( in minutes )</span>
+                </label>
+                <input
+                    class="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-red-400"
+                    id="RecipeTime" asp-for="Time" type="number" placeholder="20" min="0" required>
+                <p class="text-gray-500 text-xs italic">Please enter time in minutes only!</p>
+            </div>
+            <div class="w-full md:w-1/3 px-3 mb-6 md:mb-0">
+                <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="RecipeServing">
+                    Serving <span class="italic text-gray-500">( for persons )</span>
+                </label>
+                <input
+                    class="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-red-400"
+                    id="RecipeServing" asp-for="Serving" type="number" placeholder="4" min="0" required>
+            </div>
+        </div>
+        <div class="flex flex-wrap -mx-3 mb-2">
+            <div class="w-full md:w-1/3 px-3 mb-6 md:mb-0">
+                <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="RecipePrepare">
+                    Prepare
+                </label>
+                <div class="relative">
+                    <select class="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700
+                leading-tight focus:outline-none focus:bg-white focus:border-red-400" id="RecipePrepare"
+                        asp-for="Prepare">
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="w-full md:w-1/3 px-3 mb-6 md:mb-0">
+                <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="RecipeCategory">
+                    Category
+                </label>
+                <div class="relative">
+                    <select class="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700
+                leading-tight focus:outline-none focus:bg-white focus:border-red-400" id="RecipeCategory"
+                        asp-for="Category">
+                        <option value="Breakfast">Breakfast</option>
+                        <option value="Meal">Meal</option>
+                        <option value="Lunch">Lunch</option>
+                        <option value="Dinner">Dinner</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="w-full md:w-1/3 px-3 mb-6 md:mb-0">
+                <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="RecipeCalories">
+                    Calories <span class="italic text-gray-500">( Calc )</span>
+                </label>
+                <input
+                    class="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-red-400"
+                    id="RecipeCalories" type="number" placeholder="178" min="0" asp-for="Calories">
+            </div>
+        </div>
+        <div class="mt-6">
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="RecipeDescription">
+                Description
+            </label>
+            <textarea name="RecipeQuillDescription" value='@Model.Description' style="display: none;"></textarea>
+            <div id="RecipeDescription">
+            </div>
+        </div>
+        <div class="w-full flex justify-end mt-3">
+            <button
+                class="shadow bg-gray-500 hover:bg-gray-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded"
+                type="button" onclick="UpdateRecipe()">
+                Update
+            </button>
+        </div>
+        <div id="content"></div>
+    </div>
+</div>
+
+@section Scripts{
+<script>
+
+    var decodeHTML = function (html) {
+        var txt = document.createElement('textarea');
+        txt.innerHTML = html;
+        return txt.value;
+    };
+    var decoded = decodeHTML('@Model.Description');
+    console.log(decoded.toString());
+    $('#RecipeDescription').html(decoded.toString());
+
+    var quill = new Quill('#RecipeDescription', {
+        modules: {
+            toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'link'],
+                [{ 'color': [] }, { 'background': [] }],
+                [{ list: 'ordered' }, { list: 'bullet' }, { 'align': [] }]
+            ]
+        },
+        theme: 'snow'
+    });
+
+    var UpdateRecipe = function () {
+
+        var model = {
+            RecipeId: $('#RecipeId').val(),
+            Name: $('#RecipeName').val(),
+            Serving: $('#RecipeServing').val(),
+            Time: $('#RecipeTime').val(),
+            Prepare: $('#RecipePrepare').val(),
+            Description: $(".ql-editor").html(),
+            Category: $('#RecipeCategory').val(),
+            Calories: $('#RecipeCalories').val(),
+        };
+
+        console.log(model);
+
+        $.ajax({
+            url: "/Recipe/Update",
+            type: "POST",
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(model),
+            success: function (result) {
+                console.log("the recipe is updated");
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            },
+            error: function (xhr) {
+                alert('Evaluation could not be updates due to an error in server!');
+                console.log(xhr);
+            }
+        });
+    };
+
+    var AddIngredients = function () {
+
+        var model = {
+            RecipeId: $('#RecipeId').val(),
+            Name: $('#IngredientName').val(),
+            Quantity: $('#IngredientQuantity').val()
+        };
+
+        UpdateRecipe();
+
+        console.log(model);
+
+        $.ajax({
+            url: "/Recipe/AddIngredients",
+            type: "POST",
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(model),
+            success: function (result) {
+                console.log("the recipe ingredient added");
+                setTimeout(() => {
+                    location.reload();
+                }, 500);
+            },
+            error: function (xhr) {
+                alert('Evaluation could not be updates due to an error in server!');
+                console.log(xhr);
+            }
+        });
+    };
+
+    var DeleteIngredient = function (ingredientId) {
+        if (ingredientId != null) {
+            var result = confirm("Want to delete ingredient?");
+            if (result) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Recipe/DeleteIngredient",
+                    data: { ingredientId: ingredientId },
+                    success: function (result) {
+                        console.log("the recipe ingredient deleted");
+                        setTimeout(() => {
+                            location.reload();
+                        }, 200);
+                    },
+                    error: function (xhr) {
+                        alert('Ingredient could not be deleted due to an error in server!');
+                        console.log(xhr);
+                    }
+                });
+            }
+        }
+    };
+
+</script>
+}

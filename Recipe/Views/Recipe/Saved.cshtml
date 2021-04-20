@@ -1,0 +1,84 @@
+@{
+    ViewData["Title"] = "Saved Recipes";
+}
+@using Recipe.ViewModels;
+@model List<RecentRecipes>;
+<style>
+    .foregroundImg {
+        cursor: pointer;
+        position: relative;
+        z-index: 2;
+        pointer-events: none;
+        filter: brightness(75%);
+        border-radius: 10%;
+    }
+
+    .backgroundImg {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: -1;
+        filter: blur(25px);
+        transform: scale(1.05);
+    }
+
+    .border-radius-2 {
+        border-radius: 2% !important;
+    }
+</style>
+<h1 class="font-bold text-2xl mb-1 mt-3">Saved Recipes</h1>
+<div class="row">
+    @foreach (var recipe in Model)
+    {
+        string imageBase64Data = Convert.ToBase64String(recipe.Image);
+        string imageSource = string.Format("data:image/jpg;base64,{0}", imageBase64Data);
+        <div class="col-md-4" id="recipe_@recipe.RecipeId">
+            <div class="bg-gray-100 w-full h-64 mt-5 border-radius-2 relative"
+            style="background-image:url('@imageSource'); background-position: center; background-repeat: no-repeat; background-size: cover; z-index:1">
+                <div class="flex flex-row items-end h-full w-full">
+                    <div
+                    class="flex flex-col w-full pb-3 pt-10 px-3 bg-gradient-to-t from-black text-gray-200 border-radius-2">
+                        <a href="/Details/@recipe.RecipeId" class="text-white">
+                            <h3 class="text-base font-bold leading-5 uppercase">@recipe.Name</h3>
+                        </a>
+                        <div class="inline-flex items-center flex justify-between">
+                            <span class="capitalize font-base text-xs my-1 mr-1">@recipe.CreatedBy</span>
+                            @if (@recipe.IsSaved)
+                            {
+                                <a class="cursor-pointer" onclick="Save(@recipe.RecipeId)"><i class="fas fa-bookmark"
+                                id="saveIcon_@recipe.RecipeId"></i></a>
+                            }
+                        </div>
+                        <div class="flex flex-row justify-end">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-100 w-full mt-5 h-64 backgroundImg"
+            style="background-image:url('@imageSource'); background-position: center; background-repeat: no-repeat; background-size: cover;">
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    var Save = function (recipeId) {
+        if (recipeId != null) {
+            $.ajax({
+                type: "POST",
+                url: "/Recipe/Save",
+                data: { recipeId: recipeId },
+                success: function (result) {
+                    console.log("the recipe saved or unsaved");
+                    $('#recipe_' + recipeId).remove();
+                },
+                error: function (xhr) {
+                    alert('Recipe could not be saved due to an error in server!');
+                    console.log(xhr);
+                }
+            });
+        }
+    };
+</script>
+}
